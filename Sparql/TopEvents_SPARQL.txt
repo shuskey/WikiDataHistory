@@ -1,0 +1,102 @@
+PREFIX  schema: <http://schema.org/>
+PREFIX  bd:   <http://www.bigdata.com/rdf#>
+PREFIX  wdt:  <http://www.wikidata.org/prop/direct/>
+PREFIX  wikibase: <http://wikiba.se/ontology#>
+PREFIX  xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX  skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX  rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX  wd:   <http://www.wikidata.org/entity/>
+
+SELECT  (SAMPLE(year(xsd:dateTime(?eventDate))) AS ?year) ?linkCount ?item (SAMPLE(?pic) AS ?picture) (SAMPLE(coalesce(?en_label, ?item_label)) AS ?itemLabel) (SAMPLE(?sitelink) AS ?wikiLink) (SAMPLE(coalesce(?en_description, ?item_description)) AS ?description) (GROUP_CONCAT(DISTINCT ?alias ; separator=' | ') AS ?aliases) (GROUP_CONCAT(DISTINCT ?location_label ; separator=' | ') AS ?locations) (GROUP_CONCAT(DISTINCT ?_country_label ; separator=' | ') AS ?countries) (SAMPLE(?eventDate) AS ?pointInTime) (SAMPLE(?eventStartTime) AS ?eventStartDate) (SAMPLE(?eventEndTime) AS ?eventEndDate)
+WHERE
+  {
+		VALUES ?list {
+			wd:Q1190554   # Occurance # 1933 Hitler
+			wd:Q110227435 # Past Occurance 
+			wd:Q13418847  # Historical Event
+			wd:Q1656682   # Event
+			wd:Q1520311   # Violent Crime
+			wd:Q1174599   # Attack     
+			wd:Q4         # Death
+			wd:Q3882219   # Assassination
+			wd:Q891854    # Bomb Attack
+		    wd:Q2223653   # Terrorist Attack # 2001 Sept 11 Attacks on US
+			wd:Q198       # War # 1853 & 1856 Crimean War Oct 5, 1853 – Mar 30, 1856, 1941 WWII, 1945 WWII, 1955, 1990, 1991
+			wd:Q178561    # Battle
+			wd:Q3839081   # Disaster
+			wd:Q168247    # Famine
+			wd:Q12184     # Pandemic
+			wd:Q87167     # Manuscript
+			wd:Q8068      # Flood
+			wd:Q1682108   # Vision
+		}
+      { ?item  wdt:P31             ?list ;
+               wikibase:sitelinks  ?linkCount ;
+               wdt:P276            ?location .
+        ?item wdt:P276/wdt:P17 ?_country .
+        ?item  wdt:P585  ?eventDate
+      }
+    UNION
+      { ?item  wdt:P31             ?list ;
+               wikibase:sitelinks  ?linkCount ;
+               wdt:P276            ?location .
+        ?item wdt:P276/wdt:P17 ?_country .
+        ?item  wdt:P580  ?eventStartTime ;
+               wdt:P580  ?eventDate ;
+               wdt:P582  ?eventEndTime
+      }
+    UNION
+      { ?item  wdt:P31             ?list ;
+               wikibase:sitelinks  ?linkCount ;
+               wdt:P276            ?location .
+        ?item wdt:P276/wdt:P17 ?_country .
+        ?item  wdt:P582  ?eventEndTime ;
+               wdt:P582  ?eventDate ;
+               wdt:P580  ?eventStartTime
+      }
+    UNION
+      { ?item  wdt:P31             ?list ;
+               wikibase:sitelinks  ?linkCount ;
+               wdt:P17             ?location ;
+               wdt:P17             ?_country ;
+               wdt:P571            ?inception ;
+               wdt:P571            ?eventDate
+      }
+    FILTER ( ( ?eventDate >= "1881-01-01T00:00:00Z"^^xsd:dateTime ) && ( ?eventDate <= "1881-12-31T00:00:00Z"^^xsd:dateTime ) )
+    SERVICE wikibase:label
+      { bd:serviceParam
+                  wikibase:language  "[AUTO_LANGUAGE],en"
+      }
+    OPTIONAL
+      { ?item  rdfs:label  ?en_label
+        FILTER ( lang(?en_label) = "en" )
+      }
+#    OPTIONAL
+#      { ?item  rdfs:label  ?item_label }
+    OPTIONAL
+      { ?location  rdfs:label  ?location_label
+        FILTER ( lang(?location_label) = "en" )
+      }
+    OPTIONAL
+      { ?_country  rdfs:label  ?_country_label
+        FILTER ( lang(?_country_label) = "en" )
+      }
+    OPTIONAL
+      { ?item  skos:altLabel  ?alias
+        FILTER ( lang(?alias) = "en" )
+      }
+    OPTIONAL
+      { ?item  schema:description  ?en_description
+        FILTER ( lang(?en_description) = "en" )
+      }
+    OPTIONAL
+      { ?item  wdt:P18  ?pic }
+    OPTIONAL
+      { ?item  schema:description  ?item_description }
+    OPTIONAL
+      { ?sitelink  schema:about      ?item ;
+                  schema:inLanguage  "en"
+      }
+  }
+GROUP BY ?item ?itemLabel ?linkCount
+ORDER BY ?year DESC(?linkCount)
