@@ -7,7 +7,7 @@ PREFIX  skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX  rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX  wd:   <http://www.wikidata.org/entity/>
 
-SELECT  (SAMPLE(year(xsd:dateTime(?eventDate))) AS ?year) ?linkCount ?item (SAMPLE(?pic) AS ?picture) (SAMPLE(coalesce(?en_label, ?item_label)) AS ?itemLabel) (SAMPLE(?sitelink) AS ?wikiLink) (SAMPLE(coalesce(?en_description, ?item_description)) AS ?description) (GROUP_CONCAT(DISTINCT ?alias ; separator=' | ') AS ?aliases) (GROUP_CONCAT(DISTINCT ?location_label ; separator=' | ') AS ?locations) (GROUP_CONCAT(DISTINCT ?_country_label ; separator=' | ') AS ?countries) (SAMPLE(?eventDate) AS ?pointInTime) (SAMPLE(?eventStartTime) AS ?eventStartDate) (SAMPLE(?eventEndTime) AS ?eventEndDate)
+SELECT  (SAMPLE(year(xsd:dateTime(?eventDate))) AS ?year) ?linkCount ?item (SAMPLE(?pic) AS ?picture) (SAMPLE(?en_label) AS ?itemLabel) (SAMPLE(?sitelink) AS ?wikiLink) (SAMPLE(coalesce(?en_description, ?item_description)) AS ?description) (GROUP_CONCAT(DISTINCT ?alias ; separator=' | ') AS ?aliases) (GROUP_CONCAT(DISTINCT ?location_label ; separator=' | ') AS ?locations) (GROUP_CONCAT(DISTINCT ?_country_label ; separator=' | ') AS ?countries) (SAMPLE(?eventDate) AS ?pointInTime) (SAMPLE(?eventStartTime) AS ?eventStartDate) (SAMPLE(?eventEndTime) AS ?eventEndDate)
 WHERE
   {
 		VALUES ?list {
@@ -69,10 +69,8 @@ WHERE
       }
     OPTIONAL
       { ?item  rdfs:label  ?en_label
-        FILTER ( lang(?en_label) = "en" )
+        FILTER ( lang(?en_label) = "en" || lang(?en_label) = "fr" || lang(?en_label) = "es") # || lang(?en_label) = "de"  || lang(?en_label) = "ru")
       }
-#    OPTIONAL
-#      { ?item  rdfs:label  ?item_label }
     OPTIONAL
       { ?location  rdfs:label  ?location_label
         FILTER ( lang(?location_label) = "en" )
