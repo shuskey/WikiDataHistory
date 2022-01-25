@@ -21,6 +21,10 @@ namespace WikiDataHistory
         {
             int startYear = 1200;
             int endYear = DateTime.Now.Year;
+            int exceptionCount = 0;
+            int emptyLabelCount = 0;
+            int emptyLabelAndDescriptionCount = 0;
+
             Console.WriteLine($"{DateTime.Now.ToString("h:mm:ss tt")} Hello World Top Events!  Collecting WikiData from {startYear} to {endYear}.");
             string sparqlFileName = "TopEvents_SPARQL.txt";
             string dbFileName = "TopEvents.db";
@@ -58,15 +62,25 @@ namespace WikiDataHistory
                     {
                         //WriteToConsole(topEvent);
                         WriteToSqliteDb(cmd, topEvent);
+                        if (topEvent.ItemLabel?.Value == null)
+                        {
+                            emptyLabelCount++;
+                            if (topEvent.Description?.Value == null)
+                            {
+                                emptyLabelAndDescriptionCount++;
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Got an {ex.Message} exception when processing {year}.");
+                    exceptionCount++;
                 }
                 Console.WriteLine($"-=-=-=-=-=-=-=-=-=-=-");
             }
             Console.WriteLine($"{DateTime.Now.ToString("h:mm:ss tt")} Done.");
+            Console.WriteLine($"{exceptionCount} exceptions, {emptyLabelCount} empty Label entries, {emptyLabelAndDescriptionCount} empty Label and Description entries.");
             con.Close();
         }
         private static SQLiteConnection InitializeSqliteDb(string dbFileName)
